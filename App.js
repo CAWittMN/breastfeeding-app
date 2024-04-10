@@ -6,17 +6,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export default function App() {
   const [lastBoobUsed, setLastBoobUsed] = useState("");
 
-  const getAsyncData = async () => {
-    try {
-      const value = await AsyncStorage.getItem("lastBoobUsed");
-      if (value !== null) {
-        setLastBoobUsed(value);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const setAsyncData = async (value) => {
     try {
       await AsyncStorage.setItem("lastBoobUsed", value);
@@ -25,16 +14,34 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    getAsyncData();
-  }, []);
+  const rightWidth = useSharedValue(300);
+  const rightHeight = useSharedValue(100);
+  const rightScale = useSharedValue(1);
+  const leftWidth = useSharedValue(300);
+  const leftHeight = useSharedValue(100);
+  const leftScale = useSharedValue(1);
 
-  const rightWidth = useSharedValue(lastBoobUsed === "right" ? 200 : 300);
-  const rightHeight = useSharedValue(lastBoobUsed === "right" ? 200 : 100);
-  const leftWidth = useSharedValue(lastBoobUsed === "left" ? 200 : 300);
-  const leftHeight = useSharedValue(lastBoobUsed === "left" ? 200 : 100);
-  const rightScale = useSharedValue(lastBoobUsed === "right" ? 0.75 : 1);
-  const leftScale = useSharedValue(lastBoobUsed === "left" ? 0.75 : 1);
+  useEffect(() => {
+    const getAsyncData = async () => {
+      try {
+        const value = await AsyncStorage.getItem("lastBoobUsed");
+        if (value !== null) {
+          setLastBoobUsed(value);
+          rightWidth.value = withSpring(value === "right" ? 200 : 300);
+          rightHeight.value = withSpring(value === "right" ? 200 : 100);
+          rightScale.value = withSpring(value === "right" ? 0.75 : 1);
+          leftWidth.value = withSpring(value === "left" ? 200 : 300);
+          leftHeight.value = withSpring(value === "left" ? 200 : 100);
+          leftScale.value = withSpring(value === "left" ? 0.75 : 1);
+          console.log("Async data fetched" + lastBoobUsed);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    getAsyncData();
+    console.log("Async data fetched" + lastBoobUsed);
+  }, []);
 
   const onPress = (side) => {
     if (side === "right") {
@@ -44,21 +51,21 @@ export default function App() {
       leftWidth.value = withSpring(300);
       leftHeight.value = withSpring(100);
       leftScale.value = withSpring(1.1);
-      setLastBoobUsed("right");
-      setAsyncData("right");
-    } else {
+    } else if (side === "left") {
       leftWidth.value = withSpring(200);
       leftHeight.value = withSpring(200);
       leftScale.value = withSpring(0.75);
       rightWidth.value = withSpring(300);
       rightHeight.value = withSpring(100);
       rightScale.value = withSpring(1.1);
-      setLastBoobUsed("left");
-      setAsyncData("left");
     }
+    setLastBoobUsed(side);
+    setAsyncData(side);
   };
 
   const onReset = () => {
+    setAsyncData("");
+    setLastBoobUsed("");
     rightWidth.value = withSpring(300);
     rightHeight.value = withSpring(100);
     rightScale.value = withSpring(1);
@@ -71,6 +78,7 @@ export default function App() {
     <View className="flex w-full h-full items-center justify-center">
       <Pressable onPress={() => onPress("right")}>
         <Animated.View
+          id="boob"
           className="border rounded-full m-3"
           style={{
             transform: [{ scale: rightScale }],
@@ -82,6 +90,7 @@ export default function App() {
       </Pressable>
       <Pressable onPress={() => onPress("left")}>
         <Animated.View
+          id="boob"
           className="border rounded-full m-3"
           style={{
             transform: [{ scale: leftScale }],
@@ -90,12 +99,18 @@ export default function App() {
             height: leftHeight,
           }}
         />
+        <Animated.View
+          id="nipple"
+          className=""
+          style={{ border: "1px solid black" }}
+        ></Animated.View>
       </Pressable>
       <Pressable onPress={onReset}>
         <View className="border m-3 w-20 h-10 bg-red-500">
           <Text>Reset</Text>
         </View>
       </Pressable>
+      <Text>Last boob used: {lastBoobUsed}</Text>
     </View>
   );
 }
